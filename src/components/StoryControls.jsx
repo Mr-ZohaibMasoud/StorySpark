@@ -110,9 +110,9 @@ const StoryControls = ({
         disabled={audioState.isLoading}
         className="h-8 sm:h-10 flex items-center gap-1 sm:gap-2 rounded-full text-xs sm:text-sm font-medium transition-all"
         style={{
-          backgroundColor: audioMode ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255,255,255,0.1)',
+          backgroundColor: audioMode ? 'rgba(243, 246, 59, 0.3)' : 'rgba(255,255,255,0.1)',
           backdropFilter: 'blur(6px)',
-          border: audioMode ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(255,255,255,0.3)',
+          border: audioMode ? '1px solid rgba(240, 246, 59, 0.5)' : '1px solid rgba(255,255,255,0.3)',
           color: '#fff',
           textShadow: '0 1px 2px rgba(0,0,0,0.8)',
           opacity: audioState.isLoading ? 0.7 : 1,

@@ -47,6 +47,8 @@ const StoryViewer = ({ story, prompt, title, firstImageUrl, onClose, onReady }) 
   const scenes = useMemo(() => splitIntoScenes(story), [story]);
   const currentSceneText = scenes[currentScene] || story;
 
+
+
   // Refs for cleanup
   const handleCloseRef = useRef();
   const timeoutRefs = useRef(new Set());
@@ -458,14 +460,22 @@ const StoryViewer = ({ story, prompt, title, firstImageUrl, onClose, onReady }) 
           : 'absolute inset-0 flex items-center justify-center px-4 sm:px-6'
       } style={{ transition: 'all 600ms ease' }}>
         <div 
-          className="rounded-xl p-4 sm:p-5 shadow-2xl max-h-60 sm:max-h-72 overflow-y-auto w-full" 
+          className="rounded-xl p-4 sm:p-5 shadow-2xl w-full" 
           style={{ 
             backgroundColor: 'rgba(0, 0, 0, 0.17)', 
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.2)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            maxHeight: '288px' // Fixed height for consistency
           }}
         >
+          {/* Scrollable content area */}
+          <div 
+            className="overflow-y-auto" 
+            style={{ 
+              maxHeight: audioMode && audioState.duration > 0 ? '180px' : '240px' // Leave space for audio bar
+            }}
+          >
           <div 
             className="text-sm sm:text-base lg:text-lg leading-relaxed"
             style={{ 
@@ -503,19 +513,30 @@ const StoryViewer = ({ story, prompt, title, firstImageUrl, onClose, onReady }) 
               </div> */}
             </div>
           )}
-          {/* Audio progress visualization */}
+          </div>
+          
+          {/* Fixed Audio Progress Bar - Always visible at bottom with glass morphism */}
           {audioMode && audioState.duration > 0 && (
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-white/70 mb-1">
+            <div 
+              className="mt-4 p-3 sm:p-4 rounded-xl"
+              style={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+              }}
+            >
+              <div className="flex items-center justify-between text-xs text-white/70 mb-2">
                 <span>{Math.floor(audioState.currentTime / 60)}:{Math.floor(audioState.currentTime % 60).toString().padStart(2, '0')}</span>
                 <span>{Math.floor(audioState.duration / 60)}:{Math.floor(audioState.duration % 60).toString().padStart(2, '0')}</span>
               </div>
-              <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden">
+              <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
                 <div 
-                  className="h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-full transition-all duration-300"
+                  className="h-full rounded-full transition-all duration-300"
                   style={{ 
                     width: `${Math.min(100, (audioState.currentTime / audioState.duration) * 100)}%`,
-                    boxShadow: '0 0 8px rgba(147, 51, 234, 0.4)'
+                    background: 'linear-gradient(90deg, #f9c859 0%, #ffd700 100%)',
+                    boxShadow: '0 0 8px rgba(249, 200, 89, 0.4)'
                   }}
                 />
               </div>
