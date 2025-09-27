@@ -96,38 +96,24 @@ Make it a memorable, impactful story that children will love with ${complexity =
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
         try {
-          let response;
-          
-          // Use POST for long prompts to avoid URL length limits
-          if (prompt.length > 1500) {
-            response = await fetch(POLLINATIONS_TEXT_URL, {
-              method: "POST",
-              signal: controller.signal,
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'text/plain',
-                'User-Agent': 'StorySpark-App/1.0'
-              },
-              body: JSON.stringify({
-                prompt: prompt,
-                model: "openai",
-                max_tokens: 1500
-              })
-            });
-          } else {
-            // Use GET for shorter prompts
-            const encodedPrompt = encodeURIComponent(prompt);
-            const url = `${POLLINATIONS_TEXT_URL}${encodedPrompt}`;
-            
-            response = await fetch(url, {
-              method: "GET",
-              signal: controller.signal,
-              headers: {
-                'Accept': 'text/plain',
-                'User-Agent': 'StorySpark-App/1.0'
-              }
-            });
+          // Always use GET for Pollinations.ai - simplify prompt if too long
+          let finalPrompt = prompt;
+          if (prompt.length > 2000) {
+            // Create a shorter version of the prompt
+            finalPrompt = `You are a professional children's story writer. Write a ${storyLength} children's story featuring ${character} in ${setting}. Theme: ${theme}. Moral: ${moral}. Mood: ${mood}. Age: ${ageGroup}. Start with "TITLE: [title]" then the story. Make it ${complexity} and engaging.`;
           }
+          
+          const encodedPrompt = encodeURIComponent(finalPrompt);
+          const url = `${POLLINATIONS_TEXT_URL}${encodedPrompt}`;
+          
+          const response = await fetch(url, {
+            method: "GET",
+            signal: controller.signal,
+            headers: {
+              'Accept': 'text/plain',
+              'User-Agent': 'StorySpark-App/1.0'
+            }
+          });
 
           clearTimeout(timeoutId);
           
@@ -188,61 +174,37 @@ Make it a memorable, impactful story that children will love with ${complexity =
 
   // Generate scene-specific image prompts using Pollinations.ai
   static async generateSceneImagePrompts(scenes, storyTitle) {
-    // Create shorter, focused prompts to avoid URL length limits
-    const shortPrompt = `Create image prompts for a children's story "${storyTitle}". For each scene, write ONE line describing the visual elements. Use keywords like "whimsical children's book illustration, colorful digital art, fantasy style".
+    // Create very short prompts to avoid URL length limits
+    const shortPrompt = `Create ${scenes.length} image prompts for "${storyTitle}". Each line should describe visual elements for a scene. Style: whimsical children's book illustration, colorful digital art.
 
-Scenes (${scenes.length} total):
+Scenes:
 ${scenes.map((scene, index) => {
-  // Truncate very long scenes to avoid URL length issues
-  const truncatedScene = scene.length > 200 ? scene.slice(0, 200) + '...' : scene;
-  return `${index + 1}. ${truncatedScene.trim()}`;
+  // Keep scenes very short to avoid URL issues
+  const shortScene = scene.length > 100 ? scene.slice(0, 100) + '...' : scene;
+  return `${index + 1}. ${shortScene.trim()}`;
 }).join('\n')}
 
-Generate ONE image prompt per scene:`;
+One prompt per line:`;
 
     try {
       const data = await this.makeRateLimitedRequest(async () => {
-        // Try POST request first for longer prompts, fallback to GET if needed
-        if (shortPrompt.length > 1500) {
-          // Use POST for very long prompts
-          const response = await fetch(POLLINATIONS_TEXT_URL, {
-            method: "POST",
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'text/plain',
-              'User-Agent': 'StorySpark-App/1.0'
-            },
-            body: JSON.stringify({
-              prompt: shortPrompt,
-              model: "openai",
-              max_tokens: 1000
-            })
-          });
+        // Always use GET for Pollinations.ai text generation
+        const encodedPrompt = encodeURIComponent(shortPrompt);
+        const url = `${POLLINATIONS_TEXT_URL}${encodedPrompt}`;
 
-          if (!response.ok) {
-            throw new Error(`Pollinations API Error ${response.status}: ${response.statusText}`);
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            'Accept': 'text/plain',
+            'User-Agent': 'StorySpark-App/1.0'
           }
+        });
 
-          return await response.text();
-        } else {
-          // Use GET for shorter prompts
-          const encodedPrompt = encodeURIComponent(shortPrompt);
-          const url = `${POLLINATIONS_TEXT_URL}${encodedPrompt}`;
-
-          const response = await fetch(url, {
-            method: "GET",
-            headers: {
-              'Accept': 'text/plain',
-              'User-Agent': 'StorySpark-App/1.0'
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error(`Pollinations API Error ${response.status}: ${response.statusText}`);
-          }
-
-          return await response.text();
+        if (!response.ok) {
+          throw new Error(`Pollinations API Error ${response.status}: ${response.statusText}`);
         }
+
+        return await response.text();
       });
 
       if (data && typeof data === 'string') {
@@ -251,10 +213,11 @@ Generate ONE image prompt per scene:`;
           .map(line => line.trim())
           .filter(line => 
             line && 
-            line.length > 30 && // Reasonable prompt length
+            line.length > 20 && // Reasonable prompt length
             !line.toLowerCase().includes('scene') && // Skip scene headers
             !line.includes('FORMAT:') && // Skip formatting instructions
-            !line.startsWith('Story:') // Skip story title
+            !line.startsWith('Story:') && // Skip story title
+            !line.startsWith('One prompt') // Skip instruction text
           );
         
         if (lines.length >= scenes.length) {
@@ -268,11 +231,11 @@ Generate ONE image prompt per scene:`;
         }
       }
       
-      // If parsing failed, create fallback prompts
-      console.log("Using fallback prompts for scenes");
+      // If API worked but parsing failed, create fallback prompts
+      console.log("API response received but parsing failed, using fallback prompts");
       const fallbackPrompts = scenes.map((scene, index) => {
-        const scenePreview = scene.slice(0, 100).replace(/[^\w\s]/g, ' ').trim();
-        return `A whimsical children's book illustration showing: ${scenePreview}. Colorful, engaging, fantasy digital art style, child-friendly storybook artwork.`;
+        const scenePreview = scene.slice(0, 80).replace(/[^\w\s]/g, ' ').trim();
+        return `Whimsical children's book illustration: ${scenePreview}. Colorful digital art, fantasy style, child-friendly.`;
       });
       
       return {
@@ -316,46 +279,28 @@ Generate ONE creative, engaging title:`;
 
     try {
       const data = await this.makeRateLimitedRequest(async () => {
+        // Simplify prompt if too long
+        let finalPrompt = prompt;
         if (prompt.length > 1500) {
-          // Use POST for long prompts
-          const response = await fetch(POLLINATIONS_TEXT_URL, {
-            method: "POST",
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'text/plain',
-              'User-Agent': 'StorySpark-App/1.0'
-            },
-            body: JSON.stringify({
-              prompt: prompt,
-              model: "openai",
-              max_tokens: 50
-            })
-          });
-
-          if (!response.ok) {
-            throw new Error(`Pollinations API Error ${response.status}: ${response.statusText}`);
-          }
-
-          return await response.text();
-        } else {
-          // Use GET for shorter prompts
-          const encodedPrompt = encodeURIComponent(prompt);
-          const url = `${POLLINATIONS_TEXT_URL}${encodedPrompt}`;
-
-          const response = await fetch(url, {
-            method: "GET",
-            headers: {
-              'Accept': 'text/plain',
-              'User-Agent': 'StorySpark-App/1.0'
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error(`Pollinations API Error ${response.status}: ${response.statusText}`);
-          }
-
-          return await response.text();
+          finalPrompt = `Create a catchy children's book title for a story about: ${story.slice(0, 200)}... Original prompt: ${originalPrompt.slice(0, 100)}. Return ONLY the title.`;
         }
+        
+        const encodedPrompt = encodeURIComponent(finalPrompt);
+        const url = `${POLLINATIONS_TEXT_URL}${encodedPrompt}`;
+
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            'Accept': 'text/plain',
+            'User-Agent': 'StorySpark-App/1.0'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Pollinations API Error ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.text();
       });
 
       if (data && typeof data === 'string') {
