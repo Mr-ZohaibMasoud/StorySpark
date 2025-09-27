@@ -25,6 +25,12 @@ dist-ssr
 *.key
 secrets.js
 secrets.json
+.env.local
+.env.production.local
+
+# Firebase
+firebase-debug.log
+.firebase/
 !.vscode/extensions.json
 !.vscode/settings.json
 .idea

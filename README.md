@@ -6,12 +6,14 @@
 
 **Transform imagination into interactive adventures with AI-powered storytelling**
 
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-ai--storyspark.web.app-blue?style=for-the-badge)](https://ai-storyspark.web.app)
 [![React](https://img.shields.io/badge/React-19.1.1-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-7.1.7-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-Hosting-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![CSS3](https://img.shields.io/badge/CSS3-Responsive-1572B6?style=for-the-badge&logo=css3)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 
-[🚀 Live Demo](#) | [📖 Documentation](#features) | [🛠️ Installation](#installation) | [🤝 Contributing](#contributing)
+[🚀 Live Demo](https://ai-storyspark.web.app) | [📖 Documentation](#features) | [🛠️ Installation](#installation) | [🤝 Contributing](#contributing)
 
 </div>
 
@@ -20,6 +22,10 @@
 ## 🌟 Overview
 
 StorySpark is a revolutionary AI-powered storytelling platform that creates personalized, interactive stories for children. With intelligent device detection, immersive audio narration, and beautiful AI-generated illustrations, StorySpark transforms simple prompts into magical adventures tailored for any screen size.
+
+### 🚀 **Live Demo: [https://ai-storyspark.web.app](https://ai-storyspark.web.app)**
+
+**Try it now!** Create your first AI-powered story in seconds - no registration required!
 
 ### 🎯 Key Highlights
 
@@ -137,7 +143,22 @@ This creates an optimized production build in the `dist/` folder.
 2. Upload `dist/` folder contents
 3. Your app will be live at `https://yourusername.github.io/StorySpark`
 
-#### 🐳 Docker
+#### � Firebase Hosting (Current Deployment)
+```bash
+# Install Firebase CLI
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Build and deploy
+npm run build
+firebase deploy
+
+# Live at: https://ai-storyspark.web.app
+```
+
+#### �🐳 Docker
 ```dockerfile
 FROM node:18-alpine
 WORKDIR /app
@@ -294,7 +315,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Zohaib Masoud** - [@Mr-ZohaibMasoud](https://github.com/Mr-ZohaibMasoud)
 
-- 💼 **LinkedIn**: [Connect with me](https://linkedin.com/in/zohaibmasoud)
+- 💼 **LinkedIn**: [Connect with me](https://www.linkedin.com/in/zohaib-masoud)
 - 🐦 **Twitter**: [@zohaibmasoud](https://twitter.com/zohaibmasoud)
 - 📧 **Email**: zohaibmasoud@gmail.com
 
@@ -334,7 +355,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **⭐ Star this repository if you found it helpful!**
 
-[Report Bug](https://github.com/Mr-ZohaibMasoud/StorySpark/issues) • [Request Feature](https://github.com/Mr-ZohaibMasoud/StorySpark/issues) • [View Demo](#)
+[Report Bug](https://github.com/Mr-ZohaibMasoud/StorySpark/issues) • [Request Feature](https://github.com/Mr-ZohaibMasoud/StorySpark/issues) • [View Demo](https://ai-storyspark.web.app)
 
 Made with ❤️ for storytellers everywhere
 
