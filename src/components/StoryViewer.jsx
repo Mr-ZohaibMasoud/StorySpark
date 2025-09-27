@@ -21,9 +21,15 @@ const StoryViewer = ({ story, prompt, title, firstImageUrl, onClose, onReady }) 
   // Create a unique story ID for localStorage
   const storyId = useMemo(() => {
     if (!story || !prompt) return null;
-    // Create a simple hash from story content and prompt
+    // Create a simple hash from story content and prompt (Unicode-safe)
     const content = story.slice(0, 100) + prompt.slice(0, 50);
-    return btoa(content).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16);
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(36).slice(0, 16);
   }, [story, prompt]);
 
   // Scene navigation state with localStorage persistence
