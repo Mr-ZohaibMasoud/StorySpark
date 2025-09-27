@@ -1,28 +1,15 @@
-// Kids Story Teller AI API Service
-// Adapted from Z.AI Chat Completions for story generation
+// Story generation API service
+// Uses Pollinations.ai - completely FREE and open source!
+// No API keys required - perfect for public repositories
 
-const API_URL = "https://api.z.ai/api/paas/v4/chat/completions";
-
-// Dual GLM Account Configuration
-const GLM_ACCOUNTS = {
-  ACCOUNT_1: {
-    key: "06d2e3ddefa64b11a60f58d01c2d3f97.SKMJ53iT1AOsXTaP",
-    purpose: "Story Outline Generation"
-  },
-  ACCOUNT_2: {
-    key: "2f7559b0015841d49cb98c0eabef729f.roqdp02mDPHhzMKj", // Replace with your second API key
-    purpose: "Scene Details & Image Prompts"
-  }
-};
-
-// Primary API key (Account 1 for story generation)
-const API_KEY = GLM_ACCOUNTS.ACCOUNT_1.key;
+// Pollinations.ai endpoints - all FREE and open source
+const POLLINATIONS_TEXT_URL = "https://text.pollinations.ai/";
 
 export class StoryAPI {
   static requestQueue = [];
   static isProcessingQueue = false;
-  static rateLimitDelay = 1000; // 1 second between requests (reduced from 2)
-  static maxRetries = 2; // Reduced retries to fail faster
+  static rateLimitDelay = 1000; // 1 second between requests
+  static maxRetries = 2;
 
   // Rate-limited API request handler
   static async makeRateLimitedRequest(requestFn, retryCount = 0) {
@@ -36,7 +23,7 @@ export class StoryAPI {
             console.log(`Rate limit hit, retrying in ${(retryCount + 1) * 3000}ms... (attempt ${retryCount + 1}/${this.maxRetries})`);
             setTimeout(() => {
               this.makeRateLimitedRequest(requestFn, retryCount + 1).then(resolve).catch(reject);
-            }, (retryCount + 1) * 3000); // Exponential backoff
+            }, (retryCount + 1) * 3000);
           } else {
             reject(error);
           }
@@ -59,7 +46,6 @@ export class StoryAPI {
       const request = this.requestQueue.shift();
       await request();
       
-      // Wait before processing next request
       if (this.requestQueue.length > 0) {
         await new Promise(resolve => setTimeout(resolve, this.rateLimitDelay));
       }
@@ -68,6 +54,7 @@ export class StoryAPI {
     this.isProcessingQueue = false;
   }
 
+  // Generate story using Pollinations.ai - completely FREE!
   static async generateStory(storyParams) {
     const {
       character = "a friendly animal",
@@ -80,108 +67,72 @@ export class StoryAPI {
       complexity = "simple"
     } = storyParams;
 
-    // Enhanced system prompt with mood and complexity awareness
-    const systemPrompt = `You are a professional children's story writer creating ${mood} stories for kids aged ${ageGroup}. 
-    
-    STORY REQUIREMENTS:
-    - Age-appropriate for ${ageGroup} with ${complexity} language and concepts
-    - Mood: ${mood} - ensure the story captures this feeling throughout
-    - Safe, educational, and engaging content
-    - ${storyLength === 'short' ? 'About 150-250 words' : storyLength === 'medium' ? 'About 300-450 words' : 'About 500-700 words'}
-    - Clear moral lesson about ${moral}
-    - Proper paragraph structure for easy reading aloud
-    
-    WRITING STYLE:
-    - Use ${complexity === 'very simple' ? 'very simple words and short sentences' : 
+    // Create a comprehensive prompt for Pollinations.ai
+    const prompt = `You are a professional children's story writer creating ${mood} stories for kids aged ${ageGroup}.
+
+Write a ${storyLength} children's story featuring ${character} in ${setting}. The story should focus on the theme of ${theme} and teach the moral lesson: ${moral}.
+
+REQUIREMENTS:
+- Age-appropriate for ${ageGroup} with ${complexity} language
+- Mood: ${mood} - capture this feeling throughout
+- Safe, educational, and engaging content
+- ${storyLength === 'short' ? 'About 150-250 words' : storyLength === 'medium' ? 'About 300-450 words' : 'About 500-700 words'}
+- Clear moral lesson about ${moral}
+- Proper paragraph structure for easy reading aloud
+
+IMPORTANT: Start your response with a title on the first line in this format:
+TITLE: [Your Creative Title Here]
+
+Then provide the story content below.
+
+Make it a memorable, impactful story that children will love with ${complexity === 'very simple' ? 'very simple words and short sentences' : 
               complexity === 'simple' ? 'simple vocabulary with some descriptive language' :
               complexity === 'medium' ? 'rich vocabulary and varied sentence structure' :
-              'advanced vocabulary and complex narrative techniques'}
-    - Include vivid, child-friendly descriptions
-    - Create emotional connection and engagement
-    - Maintain the ${mood} tone throughout the story
-    
-    Make it a memorable, impactful story that children will love!`;
-
-    const userPrompt = `Create a ${mood} children's story featuring ${character} in ${setting}. 
-
-    IMPORTANT: Start your response with a title on the first line in this exact format:
-    TITLE: [Your Creative Title Here]
-    
-    Then provide the story content below.
-    
-    The story should:
-    - Focus on the theme of ${theme}
-    - Be perfectly suited for ${ageGroup} children
-    - Capture a ${mood} mood and atmosphere
-    - Include the character ${character} as the main protagonist
-    - Take place in ${setting}
-    - Teach the moral lesson: ${moral}
-    
-    Make it engaging, memorable, and perfectly tailored to the specified age group and mood!`;
-
-    const messages = [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ];
-
-    const body = {
-      model: "glm-4.5-flash",
-      messages,
-      thinking: { type: "enabled" },
-      max_tokens: 1500,
-      temperature: 0.8, // Higher creativity for stories
-    };
+              'advanced vocabulary and complex narrative techniques'}.`;
 
     try {
       const data = await this.makeRateLimitedRequest(async () => {
-        // Add timeout to prevent hanging requests
+        // Encode the prompt for URL
+        const encodedPrompt = encodeURIComponent(prompt);
+        const url = `${POLLINATIONS_TEXT_URL}${encodedPrompt}`;
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
         try {
-          const response = await fetch(API_URL, {
-            method: "POST",
+          const response = await fetch(url, {
+            method: "GET",
+            signal: controller.signal,
             headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${API_KEY}`,
-            },
-            body: JSON.stringify(body),
-            signal: controller.signal
+              'Accept': 'text/plain',
+              'User-Agent': 'StorySpark-App/1.0'
+            }
           });
 
           clearTimeout(timeoutId);
-          const text = await response.text();
           
           if (!response.ok) {
-            throw new Error(`API Error ${response.status}: ${text || "(no response body)"}`);
+            throw new Error(`Pollinations API Error ${response.status}: ${response.statusText}`);
           }
 
-          let data;
-          try { 
-            data = JSON.parse(text); 
-          } catch { 
-            throw new Error("Invalid JSON response from API"); 
-          }
-
-          return data;
+          const content = await response.text();
+          return content;
         } catch (error) {
           clearTimeout(timeoutId);
           if (error.name === 'AbortError') {
-            throw new Error('Request timeout - API took too long to respond');
+            throw new Error('Request timeout - Pollinations took too long to respond');
           }
           throw error;
         }
       });
 
-      if (typeof data === "object" && data.choices?.[0]?.message?.content) {
-        const content = data.choices[0].message.content;
-        
+      if (data && typeof data === 'string' && data.length > 50) {
         // Extract title and story content
         let title = "Untitled Story";
-        let story = content;
+        let story = data;
         
-        if (content.includes("TITLE:")) {
-          const lines = content.split('\n');
+        if (data.includes("TITLE:")) {
+          const lines = data.split('\n');
           const titleLine = lines.find(line => line.trim().startsWith('TITLE:'));
           if (titleLine) {
             title = titleLine.replace('TITLE:', '').trim();
@@ -194,181 +145,97 @@ export class StoryAPI {
           success: true,
           story: story,
           title: title,
-          model: data.model,
-          usage: data.usage
+          model: "pollinations-text",
+          usage: { total_tokens: data.length } // Approximate usage
         };
       } else {
-        throw new Error("Unexpected API response format");
+        throw new Error("Invalid response from Pollinations API");
       }
     } catch (error) {
       console.error("Story generation failed:", error);
+      
+      // Fallback story if API fails
+      const fallbackStory = this.generateFallbackStory(storyParams);
+      
       return {
         success: false,
         error: error.message || "Failed to generate story",
-        story: null
+        story: fallbackStory.story,
+        title: fallbackStory.title
       };
     }
   }
 
-  // Generate scene-specific image prompts using GLM AI (Account 2 for specialized tasks)
+  // Generate scene-specific image prompts using Pollinations.ai
   static async generateSceneImagePrompts(scenes, storyTitle) {
-    const systemPrompt = `You are an expert children's book illustrator prompt creator. Your job is to create detailed, vivid image prompts for AI art generation that will bring each scene of a children's story to life.
+    const prompt = `You are an expert children's book illustrator prompt creator. Create detailed, vivid image prompts for AI art generation that will bring each scene of a children's story to life.
 
-    REQUIREMENTS:
-    - Create ONE specific image prompt per scene that captures the key visual elements
-    - Make prompts child-friendly, colorful, and engaging
-    - Include specific details about characters, setting, mood, and visual style
-    - Each prompt should be 1-2 sentences describing exactly what to illustrate
-    - Focus on the main action or moment in each scene
-    - Use artistic style keywords: "whimsical children's book illustration", "colorful digital art", "fantasy style"
-    
-    FORMAT: Return a JSON array with one prompt per scene:
-    [
-      "Scene 1 image prompt here",
-      "Scene 2 image prompt here",
-      ...
-    ]`;
+Create ONE specific image prompt per scene that captures the key visual elements. Make prompts child-friendly, colorful, and engaging. Include specific details about characters, setting, mood, and visual style.
 
-    const userPrompt = `Create individual image prompts for each scene of the story "${storyTitle}". Here are the scenes:
+FORMAT: Return one prompt per line, no numbering or extra formatting.
 
-${scenes.map((scene, index) => `**Scene ${index + 1}:**
-${scene.trim()}
+Story: "${storyTitle}"
 
-`).join('')}
+Scenes:
+${scenes.map((scene, index) => `Scene ${index + 1}: ${scene.trim()}`).join('\n\n')}
 
-Generate a specific, detailed image prompt for each scene that captures its unique visual elements and mood.`;
+Generate a specific, detailed image prompt for each scene that captures its unique visual elements and mood. Use artistic style keywords like "whimsical children's book illustration", "colorful digital art", "fantasy style".`;
 
-    const messages = [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ];
-
-    const body = {
-      model: "glm-4.5-flash",
-      messages,
-      thinking: { type: "enabled" },
-      max_tokens: 1000,
-      temperature: 0.7, // Balanced creativity for consistent but varied prompts
-    };
-
-    // Use Account 2 for image prompt generation if available, fallback to Account 1
-    const imageApiKey = GLM_ACCOUNTS.ACCOUNT_2.key !== "YOUR_SECOND_GLM_API_KEY_HERE" 
-      ? GLM_ACCOUNTS.ACCOUNT_2.key 
-      : GLM_ACCOUNTS.ACCOUNT_1.key;
-    
     try {
       const data = await this.makeRateLimitedRequest(async () => {
-        const response = await fetch(API_URL, {
-          method: "POST",
+        const encodedPrompt = encodeURIComponent(prompt);
+        const url = `${POLLINATIONS_TEXT_URL}${encodedPrompt}`;
+
+        const response = await fetch(url, {
+          method: "GET",
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${imageApiKey}`,
-          },
-          body: JSON.stringify(body),
+            'Accept': 'text/plain',
+            'User-Agent': 'StorySpark-App/1.0'
+          }
         });
 
-        const text = await response.text();
-        
         if (!response.ok) {
-          throw new Error(`API Error ${response.status}: ${text || "(no response body)"}`);
+          throw new Error(`Pollinations API Error ${response.status}: ${response.statusText}`);
         }
 
-        let data;
-        try { 
-          data = JSON.parse(text); 
-        } catch { 
-          throw new Error("Invalid JSON response from API"); 
-        }
-
-        return data;
+        return await response.text();
       });
 
-      if (typeof data === "object" && data.choices?.[0]?.message?.content) {
-        const content = data.choices[0].message.content;
-        // Parse the response content with multiple fallback strategies
-        
-        // Try multiple parsing strategies
-        let imagePrompts = null;
-        
-        // Strategy 1: Look for JSON array
-        try {
-          const jsonMatch = content.match(/\[[\s\S]*\]/);
-          if (jsonMatch) {
-            imagePrompts = JSON.parse(jsonMatch[0]);
-            // console.log("Parsed JSON array:", imagePrompts);
-          }
-        } catch (e) {
-          console.log("JSON array parsing failed:", e.message);
-        }
-        
-        // Strategy 2: Look for quoted strings (one per line)
-        if (!imagePrompts) {
-          try {
-            const quotedLines = content.match(/"([^"]+)"/g);
-            if (quotedLines && quotedLines.length >= scenes.length) {
-              imagePrompts = quotedLines.slice(0, scenes.length).map(line => line.replace(/"/g, ''));
-              console.log("Parsed quoted strings:", imagePrompts);
-            }
-          } catch (e) {
-            console.log("Quoted strings parsing failed:", e.message);
-          }
-        }
-        
-        // Strategy 3: Split by lines and clean up
-        if (!imagePrompts) {
-          try {
-            const lines = content.split('\n')
-              .map(line => line.trim())
-              .filter(line => 
-                line && 
-                line.length > 30 && // Reasonable prompt length
-                !line.toLowerCase().includes('scene') && // Skip scene headers
-                !line.includes('[') && // Skip JSON markers
-                !line.includes(']')
-              );
-            
-            if (lines.length >= scenes.length) {
-              imagePrompts = lines.slice(0, scenes.length);
-              console.log("Parsed line-by-line:", imagePrompts);
-            }
-          } catch (e) {
-            console.log("Line parsing failed:", e.message);
-          }
-        }
-        
-        // Strategy 4: Use the entire content as one prompt and duplicate
-        if (!imagePrompts && content.trim().length > 50) {
-          const singlePrompt = content.trim();
-          imagePrompts = scenes.map((scene, index) => 
-            `${singlePrompt} - Scene ${index + 1}: ${scene.slice(0, 100)}...`
+      if (data && typeof data === 'string') {
+        // Parse the response - look for individual prompts
+        const lines = data.split('\n')
+          .map(line => line.trim())
+          .filter(line => 
+            line && 
+            line.length > 30 && // Reasonable prompt length
+            !line.toLowerCase().includes('scene') && // Skip scene headers
+            !line.includes('FORMAT:') && // Skip formatting instructions
+            !line.startsWith('Story:') // Skip story title
           );
-          // console.log("Using single prompt strategy:", imagePrompts);
-        }
         
-        // If we got valid prompts, return them
-        if (imagePrompts && Array.isArray(imagePrompts) && imagePrompts.length >= scenes.length) {
+        if (lines.length >= scenes.length) {
+          const imagePrompts = lines.slice(0, scenes.length);
           return {
             success: true,
-            imagePrompts: imagePrompts.slice(0, scenes.length), // Ensure exact scene count
-            model: data.model,
-            usage: data.usage
+            imagePrompts: imagePrompts,
+            model: "pollinations-text",
+            usage: { total_tokens: data.length }
           };
         }
       }
       
-      // If all parsing failed, use fallback prompts
-      console.log("All parsing strategies failed, using fallback prompts");
+      // If parsing failed, create fallback prompts
+      console.log("Using fallback prompts for scenes");
       const fallbackPrompts = scenes.map((scene, index) => {
-        // Create prompts from scene content
         const scenePreview = scene.slice(0, 100).replace(/[^\w\s]/g, ' ').trim();
         return `A whimsical children's book illustration showing: ${scenePreview}. Colorful, engaging, fantasy digital art style, child-friendly storybook artwork.`;
       });
       
       return {
-        success: true, // Still success since we have fallback prompts
+        success: true,
         imagePrompts: fallbackPrompts,
-        model: data?.model || 'fallback',
-        usage: data?.usage || null
+        model: "pollinations-fallback",
+        usage: { total_tokens: 0 }
       };
     } catch (error) {
       console.error("Scene image prompt generation failed:", error);
@@ -381,9 +248,133 @@ Generate a specific, detailed image prompt for each scene that captures its uniq
       return {
         success: false,
         error: error.message || "Failed to generate scene image prompts",
-        imagePrompts: fallbackPrompts // Always provide fallback
+        imagePrompts: fallbackPrompts
       };
     }
+  }
+
+  // Generate AI-powered story title using Pollinations.ai
+  static async generateStoryTitle(story, originalPrompt) {
+    const prompt = `You are a creative children's book title generator. Create an engaging, catchy title for this children's story.
+
+REQUIREMENTS:
+- Create a single, perfect title (2-6 words)
+- Make it magical, engaging, and child-friendly
+- Capture the essence of the story
+- Use vivid, imaginative language
+- Return ONLY the title, nothing else
+
+Story excerpt: ${story.slice(0, 300)}...
+
+Original prompt: ${originalPrompt}
+
+Generate ONE creative, engaging title:`;
+
+    try {
+      const data = await this.makeRateLimitedRequest(async () => {
+        const encodedPrompt = encodeURIComponent(prompt);
+        const url = `${POLLINATIONS_TEXT_URL}${encodedPrompt}`;
+
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            'Accept': 'text/plain',
+            'User-Agent': 'StorySpark-App/1.0'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Pollinations API Error ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.text();
+      });
+
+      if (data && typeof data === 'string') {
+        const title = data.trim()
+          .split('\n')[0] // Take first line
+          .replace(/^["']|["']$/g, '') // Remove quotes
+          .replace(/^Title:\s*/i, '') // Remove "Title:" prefix
+          .trim();
+        
+        if (title && title.length > 0 && title.length < 100) {
+          return {
+            success: true,
+            title: title,
+            model: "pollinations-text",
+            usage: { total_tokens: data.length }
+          };
+        }
+      }
+      
+      throw new Error("Invalid title response");
+    } catch (error) {
+      console.error("Title generation failed:", error);
+      
+      // Fallback to a generated title based on story content
+      const fallbackTitle = this.generateFallbackTitle(story, originalPrompt);
+      
+      return {
+        success: false,
+        error: error.message || "Failed to generate title",
+        title: fallbackTitle
+      };
+    }
+  }
+
+  // Generate fallback story when API fails
+  static generateFallbackStory(storyParams) {
+    const { character, setting, theme, moral } = storyParams;
+    
+    const fallbackStories = [
+      {
+        title: `The Adventure of ${character}`,
+        story: `Once upon a time, in ${setting}, there lived ${character}. Every day, they would explore and discover new things about ${theme}. One day, they learned an important lesson: ${moral}. From that day forward, they shared this wisdom with everyone they met, making the world a brighter and kinder place. The End.`
+      },
+      {
+        title: `${character} and the Magic of ${theme}`,
+        story: `In the wonderful world of ${setting}, ${character} embarked on a magical journey. Along the way, they discovered the true meaning of ${theme}. Through their adventures, they learned that ${moral}. This important lesson changed their life forever, and they lived happily ever after, always remembering to spread kindness wherever they went.`
+      }
+    ];
+    
+    return fallbackStories[Math.floor(Math.random() * fallbackStories.length)];
+  }
+
+  // Helper function to generate fallback titles
+  static generateFallbackTitle(story, originalPrompt) {
+    const storyLower = story.toLowerCase();
+    
+    // Common character types
+    const characters = [
+      'rabbit', 'mouse', 'cat', 'dog', 'bear', 'fox', 'lion', 'tiger', 'elephant',
+      'bird', 'fish', 'turtle', 'frog', 'butterfly', 'bee', 'ant', 'dragon', 'unicorn',
+      'princess', 'prince', 'wizard', 'fairy', 'knight', 'pirate'
+    ];
+    
+    // Find characters mentioned
+    const foundCharacters = characters.filter(char => 
+      storyLower.includes(char) || originalPrompt.toLowerCase().includes(char)
+    );
+    
+    // Generate title based on found elements
+    if (foundCharacters.length > 0) {
+      const mainChar = foundCharacters[0];
+      const adjectives = ['Brave', 'Little', 'Magic', 'Curious', 'Happy', 'Wise', 'Friendly'];
+      const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+      return `The ${randomAdj} ${mainChar.charAt(0).toUpperCase() + mainChar.slice(1)}`;
+    }
+    
+    // Generic magical titles
+    const genericTitles = [
+      'A Magical Adventure',
+      'Once Upon a Dream',
+      'The Enchanted Tale',
+      'Adventures in Wonderland',
+      'The Story of Friendship',
+      'A Tale of Wonder'
+    ];
+    
+    return genericTitles[Math.floor(Math.random() * genericTitles.length)];
   }
 
   // Get sample story prompts for inspiration
@@ -421,144 +412,4 @@ Generate a specific, detailed image prompt for each scene that captures its uniq
       }
     ];
   }
-
-  // Generate AI-powered story title using GLM
-  static async generateStoryTitle(story, originalPrompt) {
-    const systemPrompt = `You are a creative children's book title generator. Create engaging, catchy titles for children's stories.
-    
-    REQUIREMENTS:
-    - Create a single, perfect title (2-6 words)
-    - Make it magical, engaging, and child-friendly
-    - Capture the essence of the story
-    - Use vivid, imaginative language
-    - NO quotation marks or extra formatting
-    - Return ONLY the title, nothing else
-    
-    Examples of good titles:
-    - "The Brave Little Mouse"
-    - "Dragon's First Friend" 
-    - "Adventures in Rainbow Forest"
-    - "The Magic Wishing Well"`;
-
-    const userPrompt = `Create a perfect children's story title for this story:
-
-${story.slice(0, 500)}...
-
-Original prompt: ${originalPrompt}
-
-Generate ONE creative, engaging title:`;
-
-    const messages = [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ];
-
-    const body = {
-      model: "glm-4.5-flash",
-      messages,
-      thinking: { type: "enabled" },
-      max_tokens: 50, // Short response for just a title
-      temperature: 0.8, // Higher creativity for titles
-    };
-
-    // Use Account 1 for title generation
-    const titleApiKey = GLM_ACCOUNTS.ACCOUNT_1.key;
-
-    try {
-      const data = await this.makeRateLimitedRequest(async () => {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${titleApiKey}`,
-          },
-          body: JSON.stringify(body),
-        });
-
-        const text = await response.text();
-        
-        if (!response.ok) {
-          throw new Error(`API Error ${response.status}: ${text || "(no response body)"}`);
-        }
-
-        let data;
-        try { 
-          data = JSON.parse(text); 
-        } catch { 
-          throw new Error("Invalid JSON response from API"); 
-        }
-
-        return data;
-      });
-
-      if (typeof data === "object" && data.choices?.[0]?.message?.content) {
-        const title = data.choices[0].message.content.trim()
-          .replace(/^["']|["']$/g, '') // Remove quotes
-          .replace(/^Title:\s*/i, '') // Remove "Title:" prefix
-          .trim();
-        
-        // console.log("Generated AI title:", title);
-        
-        if (title && title.length > 0) {
-          return {
-            success: true,
-            title: title,
-            model: data.model,
-            usage: data.usage
-          };
-        }
-      }
-      
-      throw new Error("Invalid title response");
-    } catch (error) {
-      console.error("Title generation failed:", error);
-      
-      // Fallback to a generated title based on story content
-      const fallbackTitle = generateFallbackTitle(story, originalPrompt);
-      
-      return {
-        success: false,
-        error: error.message || "Failed to generate title",
-        title: fallbackTitle
-      };
-    }
-  }
-}
-
-// Helper function to generate fallback titles
-function generateFallbackTitle(story, originalPrompt) {
-  // Extract key characters and themes from the story
-  const storyLower = story.toLowerCase();
-  
-  // Common character types
-  const characters = [
-    'rabbit', 'mouse', 'cat', 'dog', 'bear', 'fox', 'lion', 'tiger', 'elephant',
-    'bird', 'fish', 'turtle', 'frog', 'butterfly', 'bee', 'ant', 'dragon', 'unicorn',
-    'princess', 'prince', 'wizard', 'fairy', 'knight', 'pirate'
-  ];
-  
-  // Find characters mentioned
-  const foundCharacters = characters.filter(char => 
-    storyLower.includes(char) || originalPrompt.toLowerCase().includes(char)
-  );
-  
-  // Generate title based on found elements
-  if (foundCharacters.length > 0) {
-    const mainChar = foundCharacters[0];
-    const adjectives = ['Brave', 'Little', 'Magic', 'Curious', 'Happy', 'Wise', 'Friendly'];
-    const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
-    return `The ${randomAdj} ${mainChar.charAt(0).toUpperCase() + mainChar.slice(1)}`;
-  }
-  
-  // Generic magical titles
-  const genericTitles = [
-    'A Magical Adventure',
-    'Once Upon a Dream',
-    'The Enchanted Tale',
-    'Adventures in Wonderland',
-    'The Story of Friendship',
-    'A Tale of Wonder'
-  ];
-  
-  return genericTitles[Math.floor(Math.random() * genericTitles.length)];
 }

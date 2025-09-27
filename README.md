@@ -23,11 +23,13 @@ StorySpark is a revolutionary AI-powered storytelling platform that creates pers
 
 ### 🎯 Key Highlights
 
+- 🆓 **100% FREE & Open Source** - No API keys required, powered by Pollinations.ai
 - 🤖 **AI Story Generation** - Create unique stories from simple prompts
 - 📱 **Mobile-First Design** - Optimized for all devices with smart image sizing
 - 🎨 **Dynamic Illustrations** - AI-generated images that match your story
 - 🔊 **Audio Narration** - Professional voice synthesis with scene-by-scene playback
 - ⚡ **Lightning Fast** - Built with Vite for optimal performance
+- 🌍 **Deploy Anywhere** - No API keys or secrets to manage
 - 🌙 **Theme Support** - Dark and light mode compatibility
 
 ---
@@ -176,24 +178,29 @@ StorySpark/
 ### Tech Stack
 - **Frontend**: React 19.1.1, CSS3, JavaScript ES6+
 - **Build Tool**: Vite 7.1.7
-- **AI Services**: Pollinations.ai for images and audio
+- **AI Services**: Pollinations.ai for text, images, and audio (100% FREE!)
 - **Styling**: Custom CSS with CSS Variables
 - **State Management**: React Hooks
 - **Device Detection**: Custom utility with screen analysis
+- **Open Source**: No API keys, completely transparent and forkable
 
 ---
 
 ## 🔧 Configuration
 
 ### Environment Variables
-Create a `.env` file in the root directory:
+**No environment variables required!** StorySpark uses Pollinations.ai which requires no API keys or configuration.
+
+Optionally, you can create a `.env` file for custom endpoints:
 
 ```env
-# Optional: Custom API endpoints
+# Optional: Custom Pollinations endpoints (defaults work great!)
 VITE_STORY_API_URL=https://text.pollinations.ai/
 VITE_IMAGE_API_URL=https://image.pollinations.ai/
 VITE_AUDIO_API_URL=https://text.pollinations.ai/
 ```
+
+**🎉 Zero Configuration Needed** - Just clone, install, and run!
 
 ### Device Detection Settings
 Modify `src/utils/deviceDetection.js` to customize device detection:
