@@ -1,0 +1,32 @@
+{
+  "liveServer.settings.root": "/dist",
+  "liveServer.settings.host": "localhost",
+  "liveServer.settings.port": 5500,
+  "liveServer.settings.CustomBrowser": "chrome",
+  "liveServer.settings.AdvanceCustomBrowserCmdLine": "",
+  "liveServer.settings.NoBrowser": false,
+  "liveServer.settings.ignoreFiles": [
+    ".vscode/**",
+    "**/*.scss",
+    "**/*.sass",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "liveServer.settings.proxy": {
+    "enable": false,
+    "baseUri": "/",
+    "proxyUri": "http://127.0.0.1:80"
+  },
+  "liveServer.settings.mount": [
+    ["/", "./dist"]
+  ],
+  "liveServer.settings.file": "index.html",
+  "liveServer.settings.wait": 100,
+  "liveServer.settings.fullReload": false,
+  "liveServer.settings.https": {
+    "enable": false,
+    "cert": "",
+    "key": "",
+    "passphrase": ""
+  }
+}

@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* Global layout rules: enforce no page scroll */
+html, body, #root {
+	height: 100%;
+}
+
+html, body {
+	overflow: hidden;
+}
+
+/* Theme tokens (CSS variables) */
+:root {
+	color-scheme: light;
+	--bg: #ffffff;           /* page background */
+	--fg: #0f172a;           /* primary text (slate-900) */
+	--muted: #475569;        /* secondary text (slate-600) */
+	--surface: #f8fafc;      /* panel background (slate-50) */
+	--surface-2: #f1f5f9;    /* hover background (slate-100) */
+	--border: #e5e7eb;       /* borders (gray-200) */
+	--accent: #2563eb;       /* blue-600 */
+	--accent-hover: #1d4ed8; /* blue-700 */
+	--on-accent: #ffffff;    /* text on accent */
+}
+
+.theme-dark {
+	color-scheme: dark;
+	--bg: #0b1220;           /* near slate-950 */
+	--fg: #e5e7eb;           /* gray-200 */
+	--muted: #cbd5e1;        /* slate-300 */
+	--surface: #0f172a;      /* slate-900 */
+	--surface-2: #111827;    /* gray-900 */
+	--border: #1f2937;       /* gray-800 */
+	--accent: #3b82f6;       /* blue-500 */
+	--accent-hover: #2563eb; /* blue-600 */
+	--on-accent: #ffffff;
+}
+
+/* Slightly nicer focus outlines */
+*:focus {
+	outline: none;
+}
+*:focus-visible {
+	outline: 2px solid #3b82f6; /* blue-500 */
+	outline-offset: 2px;
+}
+
+/* Loading screen animations */
+@keyframes float {
+	0%, 100% { transform: translateY(0) rotate(0deg); }
+	50% { transform: translateY(-15px) rotate(90deg); }
+}
+
+@keyframes pulse {
+	0%, 100% { opacity: 0.5; transform: scale(1); }
+	50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
